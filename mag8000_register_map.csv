@@ -1,0 +1,147 @@
+# Siemens SITRANS F M MAG 8000 Modbus RTU - normalized register metadata
+# Source: Siemens Operating Instructions 04/2016 A5E03409989-AB, Appendix A/B
+# IMPORTANT: This CSV contains the verified operational/configuration subset used by this project.
+# Undocumented or not-yet-entered addresses are intentionally reported as UNKNOWN by the scanner.
+siemens_register,name,data_type,size_bytes,unit,access_mode,group,default_monitor,description
+10,New access code,STRING,6,,WRITE_ONLY,CUSTOMER_PROFILE,false,New password protected from readback
+34,Day 3 of last week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Daily consumption based on totalizer 1
+36,Day 4 of last week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Daily consumption based on totalizer 1
+38,Day 5 of last week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Daily consumption based on totalizer 1
+40,Day 6 of last week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Daily consumption based on totalizer 1
+42,Day 7 of last week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Daily consumption based on totalizer 1
+49,Excitation frequency limit,UINT8,1,,READ_ONLY,SENSOR_CONFIG,false,Maximum selectable excitation frequency
+50,Date of fault log reset,DATE,6,,READ_ONLY,STATUS,false,Date of fault log reset
+53,Non optimal measurement time,UINT16,2,h,READ_ONLY,STATUS,false,Total hours of non optimal measurement conditions
+74,Totalizer 1 changes date,DATE,6,,READ_ONLY,TOTALIZER_CONFIG,false,Date and time totalizer 1 changed
+77,Totalizer 2 changes date,DATE,6,,READ_ONLY,TOTALIZER_CONFIG,false,Date and time totalizer 2 changed
+80,Device Product ID,UINT16,2,,READ_ONLY,DEVICE,true,Siemens MAG 8000 product ID; expected 10779 / 0x2A1B
+81,Operating hours since power up,UINT32,4,h,READ_ONLY,SERVICE,false,Total operating hours since first power up
+90,Battery operating time,UINT32,4,h,READ_ONLY,POWER,false,Operating time since last battery installation/reset
+92,Battery installation date,DATE,6,,READ_ONLY,POWER,false,Latest battery installation date
+99,Customer totalizer 3 reset date,DATE,6,,READ_ONLY,STATISTICS,false,Date when customer totalizer 3 was reset
+102,Day 2 of last week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Daily consumption based on totalizer 1
+118,Gain correction,FLOAT32,4,,READ_ONLY,SENSOR_CONFIG,false,Electronic calibration factor
+145,Actual flow meter status,UINT8,1,,READ_ONLY,STATUS,false,Bit field describing actual flow meter status
+149,Latest settling date,DATE,6,,READ_ONLY,STATISTICS,false,Latest settling date for totalizer 1
+152,Latest totalizer 1 value,TOTALTYPE,8,,READ_ONLY,STATISTICS,false,Latest stored totalizer 1 value
+156,Previous settling date,DATE,6,,READ_ONLY,STATISTICS,false,Previous settling date for totalizer 1
+159,Previous totalizer 1 value,TOTALTYPE,8,,READ_ONLY,STATISTICS,false,Previous stored totalizer 1 value
+163,Day 1 yesterday consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Latest day consumption based on totalizer 1
+165,Latest week consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Latest seven day consumption
+167,Latest month consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Latest month consumption
+207,Flow unit factor,FLOAT32,4,,READ_WRITE,SENSOR_CONFIG,false,Correction factor from m3/s to configured flow unit
+209,Totalizer volume unit factor,FLOAT32,4,,READ_WRITE,SENSOR_CONFIG,false,Correction factor from m3 to configured volume unit
+211,Flowrate unit,STRING,12,,READ_WRITE,SENSOR_CONFIG,false,Configured meter unit text for flow rate
+217,Totalizer unit,STRING,12,,READ_WRITE,SENSOR_CONFIG,false,Configured meter unit text for totalized volume
+223,Displayed unit,UINT8,1,,READ_ONLY,MENU,false,Controls display of m3 unit or unit-label arrow
+224,Pipe size,UINT16,2,mm,READ_ONLY,SENSOR_CONFIG,false,Pipe diameter size
+225,Sensor offset,FLOAT32,4,mm/s,READ_ONLY,SENSOR_CONFIG,false,Sensor calibration offset
+227,Qn,FLOAT32,4,,READ_ONLY,SENSOR_CONFIG,false,Nominal flow
+229,Calibration factor,FLOAT32,4,,READ_ONLY,SENSOR_CONFIG,false,Sensor calibration factor
+231,Calibration date,DATE,6,,READ_ONLY,SENSOR_CONFIG,false,Date of calibration
+234,Verification mode enable,UINT8,1,,READ_WRITE,SENSOR_CONFIG,false,Enable high resolution verification mode
+235,Menu active,UINT8,1,,READ_ONLY,MENU,false,Bit field describing enabled menus
+237,Adjustment Factor,FLOAT32,4,,READ_WRITE,SENSOR_CONFIG,false,Customer adjustment factor for calculated flow
+239,Excitation frequency,UINT8,1,,READ_WRITE,SENSOR_CONFIG,false,Actual selected excitation frequency
+240,Low flow cut-off,FLOAT32,4,%,READ_ONLY,SENSOR_CONFIG,false,Flow below this percentage of Qn is set to zero
+242,Filter time constant,UINT16,2,excitation-periods,READ_ONLY,SENSOR_CONFIG,false,General filter time constant
+243,Empty pipe detection enable,UINT8,1,,READ_ONLY,SENSOR_CONFIG,false,Empty pipe detection setting
+244,Empty pipe limit,INT32,4,ohm,READ_ONLY,SENSOR_CONFIG,false,Electrode impedance threshold for empty pipe detection
+246,Insulation test enable,UINT8,1,,READ_WRITE,SENSOR_CONFIG,false,Enable insulation test
+247,Insulation test interval,UINT16,2,days,READ_WRITE,SENSOR_CONFIG,false,Days between insulation tests
+248,Excitation frequency sensor limit,UINT8,1,,READ_ONLY,SENSOR_CONFIG,false,Maximum possible sensor excitation frequency
+255,Low medium impedance alarm,INT32,4,ohm,READ_WRITE,SENSOR_CONFIG,false,Electrode impedance threshold for low impedance alarm
+273,Insulation fault hours,UINT16,2,h,READ_ONLY,STATUS,false,Total hours insulation fault active
+274,Insulation fault counter,UINT8,1,,READ_ONLY,STATUS,false,Total number of insulation faults
+275,Insulation fault appears,DATE,6,,READ_ONLY,STATUS,false,First time insulation fault appeared
+278,Insulation fault disappears,DATE,6,,READ_ONLY,STATUS,false,Last time insulation fault disappeared
+289,Amplifier fault hours,UINT16,2,h,READ_ONLY,STATUS,false,Total hours amplifier fault active
+290,Amplifier fault counter,UINT8,1,,READ_ONLY,STATUS,false,Total number of amplifier faults
+291,Amplifier fault appears,DATE,6,,READ_ONLY,STATUS,false,First time amplifier fault appeared
+294,Amplifier fault disappears,DATE,6,,READ_ONLY,STATUS,false,Last time amplifier fault disappeared
+297,Parameter checksum fault hours,UINT16,2,h,READ_ONLY,STATUS,false,Total hours parameter checksum fault active
+298,Parameter checksum fault counter,UINT8,1,,READ_ONLY,STATUS,false,Total number of parameter checksum faults
+299,Parameter checksum fault appears,DATE,6,,READ_ONLY,STATUS,false,First time parameter checksum fault appeared
+302,Parameter checksum fault disappears,DATE,6,,READ_ONLY,STATUS,false,Last time parameter checksum fault disappeared
+305,Low power fault hours,UINT16,2,h,READ_ONLY,STATUS,false,Total hours low power fault active
+362,Fixed flow value,FLOAT32,4,,READ_ONLY,SERVICE,false,Fixed flow value when fixed flow is enabled
+364,Latest service date,DATE,6,,READ_WRITE,SERVICE,false,Latest service or installation date
+367,Numbers of power up,UINT16,2,,READ_ONLY,SERVICE,false,Total number of power ups
+368,Mains frequency,UINT8,1,,READ_ONLY,POWER,false,Country related mains frequency selection
+369,Battery power,UINT8,1,,READ_ONLY,POWER,false,Number of installed batteries
+370,Battery alarm limit,UINT8,1,%,READ_WRITE,POWER,false,Battery capacity level that activates low power alarm
+373,Response delay,UINT16,2,ms,READ_ONLY,COMMUNICATION,false,Minimum request-to-response delay
+374,Output A enable,UINT8,1,,READ_WRITE,PULSE_OUTPUT,false,Enable pulse output A
+375,Pulse A direction,UINT8,1,,READ_WRITE,PULSE_OUTPUT,false,Flow direction calculation for output A
+376,Amount per pulse A,FLOAT32,4,,READ_WRITE,PULSE_OUTPUT,false,Volume per pulse on output A
+378,Pulse width for pulse A,UINT8,1,ms,READ_WRITE,PULSE_OUTPUT,false,Active pulse duration for output A
+379,Output B enable,UINT8,1,,READ_WRITE,PULSE_OUTPUT,false,Enable output B
+380,Pulse B function,UINT8,1,,READ_WRITE,PULSE_OUTPUT,false,Configure output B as pulse alarm or call-up
+381,Pulse B direction,UINT8,1,,READ_WRITE,PULSE_OUTPUT,false,Flow direction calculation for output B
+382,Amount per pulse B,FLOAT32,4,,READ_WRITE,PULSE_OUTPUT,false,Volume per pulse on output B
+384,Volume per pulse on output B,UINT8,1,ms,READ_WRITE,PULSE_OUTPUT,false,Active pulse duration for output B
+401,Flow direction totalizer 1,UINT8,1,,READ_WRITE,TOTALIZER_CONFIG,false,Forward reverse or net totalization principle
+402,Flow direction totalizer 2,UINT8,1,,READ_WRITE,TOTALIZER_CONFIG,false,Forward reverse or net totalization principle
+403,Default operator menu index,UINT8,1,,READ_ONLY,MENU,false,Default operator display menu
+407,Decimal point,UINT8,1,,READ_WRITE,MENU,false,Decimal point for displayed totalized value
+408,Highest flowrate,FLOAT32,4,,READ_ONLY,STATISTICS,false,Highest measured flow rate
+410,Date of highest flowrate,DATE,6,,READ_ONLY,STATISTICS,false,Date of highest measured flow rate
+413,Lowest flowrate,FLOAT32,4,,READ_ONLY,STATISTICS,false,Lowest measured flow rate
+415,Date of lowest flowrate,DATE,6,,READ_ONLY,STATISTICS,false,Date of lowest measured flow rate
+418,Highest day consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Highest measured daily consumption
+420,Date of highest day consumption,DATE,6,,READ_ONLY,STATISTICS,false,Date of highest daily consumption
+423,Lowest day consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Lowest measured daily consumption
+425,Date of lowest day consumption,DATE,6,,READ_ONLY,STATISTICS,false,Date of lowest daily consumption
+428,Reset date of statistic info,DATE,6,,READ_ONLY,STATISTICS,false,Date statistics information was reset
+431,Upper limit in CP range 1,UINT8,1,%,READ_WRITE,CONSUMPTION_PROFILE,false,Upper limit of consumption profile range 1
+432,Total time in CP range 1,FLOAT32,4,h,READ_ONLY,CONSUMPTION_PROFILE,false,Total hours in consumption profile range 1
+434,Upper limit in CP range 2,UINT8,1,%,READ_WRITE,CONSUMPTION_PROFILE,false,Upper limit of consumption profile range 2
+435,Total time in CP range 2,FLOAT32,4,h,READ_ONLY,CONSUMPTION_PROFILE,false,Total hours in consumption profile range 2
+437,Upper limit in CP range 3,UINT8,1,%,READ_WRITE,CONSUMPTION_PROFILE,false,Upper limit of consumption profile range 3
+438,Total time in CP range 3,FLOAT32,4,h,READ_ONLY,CONSUMPTION_PROFILE,false,Total hours in consumption profile range 3
+440,Upper limit in CP range 4,UINT8,1,%,READ_WRITE,CONSUMPTION_PROFILE,false,Upper limit of consumption profile range 4
+441,Total time in CP range 4,FLOAT32,4,h,READ_ONLY,CONSUMPTION_PROFILE,false,Total hours in consumption profile range 4
+443,Upper limit in CP range 5,UINT8,1,%,READ_WRITE,CONSUMPTION_PROFILE,false,Upper limit of consumption profile range 5
+444,Total time in CP range 5,FLOAT32,4,h,READ_ONLY,CONSUMPTION_PROFILE,false,Total hours in consumption profile range 5
+446,Total time in CP range 6,FLOAT32,4,h,READ_ONLY,CONSUMPTION_PROFILE,false,Total hours in final consumption profile range
+448,Reset date of consumption profile,DATE,6,,READ_ONLY,CONSUMPTION_PROFILE,false,Date consumption profile information was reset
+451,Leakage detection mode,UINT8,1,,READ_WRITE,LEAKAGE,false,Off fixed-limit or adaptive leakage detection mode
+452,Leakage excitation frequency,UINT8,1,,READ_WRITE,LEAKAGE,false,Excitation frequency during leakage detection period
+453,Leakage limit,FLOAT32,4,,READ_WRITE,LEAKAGE,false,Limit above which possible leakage is detected
+455,Leakage source,UINT8,1,,READ_WRITE,LEAKAGE,false,Leakage source is flowrate or volume
+456,Start period for leakage detection,UINT16,2,min,READ_WRITE,LEAKAGE,false,Time of day to start leakage detection period
+457,Duration leakage detection,UINT8,1,min*10,READ_WRITE,LEAKAGE,false,Leakage detection duration in ten-minute units
+458,Periods with possible leakage,UINT8,1,,READ_ONLY,LEAKAGE,false,Actual periods above leakage limit
+459,Leakage periods before alarm,UINT8,1,,READ_WRITE,LEAKAGE,false,Periods before leakage alarm appears
+460,Lowest measured leakage value,FLOAT32,4,,READ_ONLY,LEAKAGE,false,Lowest measured leakage value
+529,Device Communication Address,UINT16,2,,READ_ONLY,COMMUNICATION,false,Modbus slave address from 1 to 247
+530,Baudrate,UINT16,2,,READ_ONLY,COMMUNICATION,false,Communication port speed selector
+531,Parity,UINT16,2,,READ_ONLY,COMMUNICATION,false,Communication parity selector
+532,Interframe space,UINT16,2,,READ_ONLY,COMMUNICATION,false,Minimum space between messages in tenth bytes
+657,Application identifier,STRING,16,,READ_WRITE,CUSTOMER_PROFILE,false,Customer application identifier max 15 characters
+665,Application location,STRING,16,,READ_WRITE,CUSTOMER_PROFILE,false,Customer application location max 15 characters
+794,Flow alarm limit,FLOAT32,4,,READ_WRITE,SENSOR_CONFIG,false,Flow limit for generating a flow alarm
+820,Measurement direction,UINT8,1,,READ_WRITE,SENSOR_CONFIG,false,Bidirectional forward-only or reverse-only measurement
+821,Reverse flow alarm limit,FLOAT32,4,,READ_WRITE,SENSOR_CONFIG,false,Reverse flow limit for generating alarm
+823,Communication module type,UINT8,1,,READ_ONLY,POWER,false,Communication module type for power-use calculation
+2009,Meter access code,STRING,6,,WRITE_ONLY,CUSTOMER_PROFILE,false,Password used to change meter parameters
+3001,Actual velocity,FLOAT32,4,mm/s,READ_ONLY,LIVE_FLOW,true,Actual velocity
+3003,Flow rate,FLOAT32,4,,READ_ONLY,LIVE_FLOW,true,Actual flow value; unit depends on meter configuration
+3005,Insulation value,FLOAT32,4,mm/s,READ_ONLY,FLOW_DIAGNOSTIC,false,Insulation value from last insulation test
+3007,Insulation tests fulfilled,FLOAT32,4,,READ_ONLY,FLOW_DIAGNOSTIC,false,Number of insulation tests since last power up
+3009,Electrode impedance A,INT32,4,ohm,READ_ONLY,FLOW_DIAGNOSTIC,false,Electrode impedance A for empty pipe detection
+3011,Electrode impedance B,INT32,4,ohm,READ_ONLY,FLOW_DIAGNOSTIC,false,Electrode impedance B for empty pipe detection
+3013,Flowrate percent value,FLOAT32,4,%,READ_ONLY,LIVE_FLOW,true,Flow rate as percent of Qn
+3015,Excitations no.,UINT32,4,,READ_ONLY,POWER,false,Excitations since last battery reset
+3017,Fault status,UINT16,2,,READ_ONLY,STATUS,true,Bit field describing active errors and warnings
+3018,Totalizer 1,TOTALTYPE,8,,READ_WRITE,TOTALIZER,true,Volume for totalization register 1; unit depends on meter configuration
+3022,Totalizer 2,TOTALTYPE,8,,READ_WRITE,TOTALIZER,true,Volume for totalization register 2; unit depends on meter configuration
+3026,Customer totalizer 3,TOTALTYPE,8,,READ_ONLY,TOTALIZER,true,Customer totalizer 3 based on totalizer 1 setup
+3030,Power supply,UINT8,1,,READ_ONLY,POWER,true,0 battery; 1 mains supply
+3031,Actual battery capacity,UINT8,1,%,READ_ONLY,POWER,true,Remaining battery capacity percentage
+3032,Power status,UINT8,1,,READ_ONLY,POWER,true,Power status code 0 through 7
+3034,Actual date and time,DATE,6,,READ_WRITE,SERVICE,false,Current meter date and time
+3037,Leakage value unit,STRING,12,,READ_ONLY,LEAKAGE,false,Text of configured leakage unit
+3043,Transmitter temperature,FLOAT32,4,°C,READ_ONLY,POWER,true,Temperature inside transmitter
+3045,Actual month consumption,FLOAT32,4,,READ_ONLY,STATISTICS,false,Actual month consumption based on totalizer 1
+3048,Insulation test date,DATE,6,,READ_ONLY,FLOW_DIAGNOSTIC,false,Date of last insulation test

@@ -8,6 +8,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Mag8000Connect {
 
@@ -27,13 +29,11 @@ public class Mag8000Connect {
     private static final long INVALID_SOCKET = -1L;
 
     private static final int SOCKADDR_IRDA_SIZE = 31;
-
-    private static final int IRDA_DEVICE_INFO_SIZE =
-            4 + 22 + 1 + 1 + 1;
-
+    private static final int IRDA_DEVICE_INFO_SIZE = 4 + 22 + 1 + 1 + 1;
     private static final int DEVICE_LIST_LEN = 10;
 
     private static final int SLAVE_ID = 1;
+    private static final int MAX_READ_REGISTERS = 125;
 
 
     // ============================================================
@@ -43,23 +43,13 @@ public class Mag8000Connect {
     private interface Ws2_32 extends Library {
 
         Ws2_32 INSTANCE =
-                Native.load(
-                        "Ws2_32",
-                        Ws2_32.class
-                );
+                Native.load("Ws2_32", Ws2_32.class);
 
-        int WSAStartup(
-                short version,
-                Pointer data
-        );
+        int WSAStartup(short version, Pointer data);
 
         int WSACleanup();
 
-        long socket(
-                int af,
-                int type,
-                int protocol
-        );
+        long socket(int af, int type, int protocol);
 
         int getsockopt(
                 long socket,
@@ -77,25 +67,11 @@ public class Mag8000Connect {
                 int optionLength
         );
 
-        int connect(
-                long socket,
-                Pointer name,
-                int nameLength
-        );
+        int connect(long socket, Pointer name, int nameLength);
 
-        int send(
-                long socket,
-                byte[] buffer,
-                int length,
-                int flags
-        );
+        int send(long socket, byte[] buffer, int length, int flags);
 
-        int recv(
-                long socket,
-                byte[] buffer,
-                int length,
-                int flags
-        );
+        int recv(long socket, byte[] buffer, int length, int flags);
 
         int closesocket(long socket);
 
@@ -103,11 +79,8 @@ public class Mag8000Connect {
     }
 
 
-    private final Ws2_32 ws =
-            Ws2_32.INSTANCE;
-
-    private long socket =
-            INVALID_SOCKET;
+    private final Ws2_32 ws = Ws2_32.INSTANCE;
+    private long socket = INVALID_SOCKET;
 
 
     // ============================================================
@@ -116,12 +89,9 @@ public class Mag8000Connect {
 
     public void connect() {
 
-        System.out.println(
-                "[INFO] Starting MAG-8000 connection..."
-        );
+        System.out.println("[INFO] Starting MAG-8000 connection...");
 
-        Memory wsaData =
-                new Memory(400);
+        Memory wsaData = new Memory(400);
 
         int startupResult =
                 ws.WSAStartup(
@@ -130,10 +100,8 @@ public class Mag8000Connect {
                 );
 
         if (startupResult != 0) {
-
             throw new RuntimeException(
-                    "WSAStartup failed. Error = "
-                            + startupResult
+                    "WSAStartup failed. Error = " + startupResult
             );
         }
 
@@ -145,35 +113,23 @@ public class Mag8000Connect {
                 );
 
         if (socket == INVALID_SOCKET) {
-
             throw new RuntimeException(
                     "Cannot create IrDA socket. Error = "
                             + ws.WSAGetLastError()
             );
         }
 
-        System.out.println(
-                "[OK] IrDA socket created."
-        );
-
-
-        // ========================================================
-        // Discover device
-        // ========================================================
+        System.out.println("[OK] IrDA socket created.");
 
         Memory deviceList =
                 new Memory(
-                        4L
-                                + (long) IRDA_DEVICE_INFO_SIZE
-                                * DEVICE_LIST_LEN
+                        4L + (long) IRDA_DEVICE_INFO_SIZE * DEVICE_LIST_LEN
                 );
 
         deviceList.clear();
 
         IntByReference deviceListLength =
-                new IntByReference(
-                        (int) deviceList.size()
-                );
+                new IntByReference((int) deviceList.size());
 
         int result =
                 ws.getsockopt(
@@ -185,64 +141,31 @@ public class Mag8000Connect {
                 );
 
         if (result != 0) {
-
             throw new RuntimeException(
-                    "Cannot discover IrDA device."
+                    "Cannot discover IrDA device. Error = "
+                            + ws.WSAGetLastError()
             );
         }
 
-        int numberOfDevices =
-                deviceList.getInt(0);
+        int numberOfDevices = deviceList.getInt(0);
 
         if (numberOfDevices <= 0) {
-
-            throw new RuntimeException(
-                    "Không tìm thấy MAG-8000."
-            );
+            throw new RuntimeException("Không tìm thấy MAG-8000.");
         }
 
-        byte[] deviceId =
-                deviceList.getByteArray(
-                        4,
-                        4
-                );
+        byte[] deviceId = deviceList.getByteArray(4, 4);
+        byte[] nameBytes = deviceList.getByteArray(8, 22);
 
-        byte[] nameBytes =
-                deviceList.getByteArray(
-                        8,
-                        22
-                );
+        String deviceName = readNullTerminatedAscii(nameBytes);
 
-        String deviceName =
-                readNullTerminatedAscii(
-                        nameBytes
-                );
-
-        System.out.println(
-                "[OK] Device found: "
-                        + deviceName
-        );
-
-        System.out.println(
-                "[INFO] Device ID: "
-                        + bytesToHex(deviceId)
-        );
-
-
-        // ========================================================
-        // IrDA address
-        // ========================================================
+        System.out.println("[OK] Device found: " + deviceName);
+        System.out.println("[INFO] Device ID: " + bytesToHex(deviceId));
 
         Memory address =
                 createIrdaAddress(
                         deviceId,
                         "IrDA:IrCOMM"
                 );
-
-
-        // ========================================================
-        // Connect
-        // ========================================================
 
         int connectResult =
                 ws.connect(
@@ -252,37 +175,32 @@ public class Mag8000Connect {
                 );
 
         if (connectResult != 0) {
-
             throw new RuntimeException(
                     "Cannot connect to MAG-8000. Error = "
                             + ws.WSAGetLastError()
             );
         }
 
-        System.out.println(
-                "[OK] Connected to MAG-8000."
-        );
+        System.out.println("[OK] Connected to MAG-8000.");
 
+        Memory timeout = new Memory(4);
+        timeout.setInt(0, 1000);
 
-        // ========================================================
-        // Receive timeout
-        // ========================================================
+        int timeoutResult =
+                ws.setsockopt(
+                        socket,
+                        SOL_SOCKET,
+                        SO_RCVTIMEO,
+                        timeout,
+                        4
+                );
 
-        Memory timeout =
-                new Memory(4);
-
-        timeout.setInt(
-                0,
-                1000
-        );
-
-        ws.setsockopt(
-                socket,
-                SOL_SOCKET,
-                SO_RCVTIMEO,
-                timeout,
-                4
-        );
+        if (timeoutResult != 0) {
+            System.out.println(
+                    "[WARNING] Cannot set receive timeout. Error = "
+                            + ws.WSAGetLastError()
+            );
+        }
     }
 
 
@@ -293,106 +211,349 @@ public class Mag8000Connect {
     public void close() {
 
         if (socket != INVALID_SOCKET) {
-
-            ws.closesocket(
-                    socket
-            );
-
-            socket =
-                    INVALID_SOCKET;
+            ws.closesocket(socket);
+            socket = INVALID_SOCKET;
         }
 
         ws.WSACleanup();
+        System.out.println("[INFO] Connection closed.");
+    }
 
-        System.out.println(
-                "[INFO] Connection closed."
+
+    // ============================================================
+    // READ ONE DATA POINT
+    // Dùng khi chỉ cần đúng một giá trị.
+    // ============================================================
+
+    public Object read(DataInfo info) {
+
+        if (!info.isReadable()) {
+            throw new IllegalArgumentException(
+                    info.getName() + " là WRITE_ONLY nên không thể đọc."
+            );
+        }
+
+        byte[] data =
+                readRegisters(
+                        info.getAddress(),
+                        info.getRegisterCount()
+                );
+
+        return decodeValue(
+                info,
+                data,
+                0
         );
     }
 
 
-    // ============================================================
-    // READ UINT16
-    // ============================================================
+    // Scanner dùng bản silent để không in SEND/RECV cho từng parameter.
+    public Object readSilent(DataInfo info) {
 
-    public int readUInt16(
-            int register
-    ) {
+        if (!info.isReadable()) {
+            throw new IllegalArgumentException(
+                    info.getName() + " là WRITE_ONLY nên không thể đọc."
+            );
+        }
 
         byte[] data =
-                readRegisters(
-                        register,
-                        1
+                readRegistersSilent(
+                        info.getAddress(),
+                        info.getRegisterCount()
                 );
 
-        return ((data[0] & 0xFF) << 8)
-                |
-                (data[1] & 0xFF);
+        return decodeValue(
+                info,
+                data,
+                0
+        );
+    }
+
+
+    public void printRegister(DataInfo info) {
+
+        try {
+            Object value = read(info);
+            printValue(info, value);
+        } catch (Exception e) {
+            System.out.println(
+                    info.getName()
+                            + " : ERROR -> "
+                            + e.getMessage()
+            );
+        }
     }
 
 
     // ============================================================
-    // READ FLOAT32
+    // READ BLOCK
+    // Một block = một Modbus request.
     // ============================================================
 
-    public float readFloat32(
-            int register
-    ) {
+    public Map<DataInfo, Object> readBlock(DataBlock block) {
 
-        byte[] data =
+        byte[] blockData =
                 readRegisters(
-                        register,
-                        2
+                        block.getStartAddress(),
+                        block.getRegisterCount()
                 );
 
-        ByteBuffer buffer =
-                ByteBuffer.wrap(data);
+        Map<DataInfo, Object> result =
+                new LinkedHashMap<>();
 
-        buffer.order(
-                ByteOrder.BIG_ENDIAN
+        for (DataInfo info : block.getDataPoints()) {
+
+            int registerOffset =
+                    info.getAddress()
+                            - block.getStartAddress();
+
+            int byteOffset =
+                    registerOffset * 2;
+
+            Object value =
+                    decodeValue(
+                            info,
+                            blockData,
+                            byteOffset
+                    );
+
+            result.put(info, value);
+        }
+
+        return result;
+    }
+
+
+    public void printBlock(DataBlock block) {
+
+        System.out.println();
+        System.out.println("--------------------------------------");
+        System.out.println(" " + block.getName());
+        System.out.println("--------------------------------------");
+
+        try {
+
+            Map<DataInfo, Object> values =
+                    readBlock(block);
+
+            for (Map.Entry<DataInfo, Object> entry
+                    : values.entrySet()) {
+
+                printValue(
+                        entry.getKey(),
+                        entry.getValue()
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "[BLOCK ERROR] "
+                            + block.getName()
+                            + " -> "
+                            + e.getMessage()
+            );
+        }
+    }
+
+
+    // ============================================================
+    // DECODE VALUE FROM A BLOCK BUFFER
+    // ============================================================
+
+    public Object decodeValue(
+            DataInfo info,
+            byte[] data,
+            int byteOffset
+    ) {
+
+        int transportBytes =
+                info.getRegisterCount() * 2;
+
+        if (byteOffset < 0
+                || byteOffset + transportBytes > data.length) {
+
+            throw new RuntimeException(
+                    "Không đủ byte để decode " + info.getName()
+            );
+        }
+
+        switch (info.getType()) {
+
+            case UINT8:
+                // Siemens: uint8 nằm ở byte thấp của một register 16-bit.
+                return data[byteOffset + 1] & 0xFF;
+
+            case UINT16:
+                return ((data[byteOffset] & 0xFF) << 8)
+                        | (data[byteOffset + 1] & 0xFF);
+
+            case UINT32:
+                return ((long) (data[byteOffset] & 0xFF) << 24)
+                        | ((long) (data[byteOffset + 1] & 0xFF) << 16)
+                        | ((long) (data[byteOffset + 2] & 0xFF) << 8)
+                        | ((long) (data[byteOffset + 3] & 0xFF));
+
+            case INT32:
+                return ByteBuffer
+                        .wrap(data, byteOffset, 4)
+                        .order(ByteOrder.BIG_ENDIAN)
+                        .getInt();
+
+            case FLOAT32:
+                return ByteBuffer
+                        .wrap(data, byteOffset, 4)
+                        .order(ByteOrder.BIG_ENDIAN)
+                        .getFloat();
+
+            case FLOAT64:
+                return ByteBuffer
+                        .wrap(data, byteOffset, 8)
+                        .order(ByteOrder.BIG_ENDIAN)
+                        .getDouble();
+
+            case STRING:
+                int stringLength = Math.min(
+                        info.getSizeBytes(),
+                        transportBytes
+                );
+
+                int actualLength = 0;
+
+                while (actualLength < stringLength
+                        && data[byteOffset + actualLength] != 0) {
+                    actualLength++;
+                }
+
+                return new String(
+                        data,
+                        byteOffset,
+                        actualLength,
+                        StandardCharsets.US_ASCII
+                ).trim();
+
+            case DATE:
+                if (info.getSizeBytes() < 6) {
+                    throw new RuntimeException(
+                            "DATE cần ít nhất 6 byte: " + info.getName()
+                    );
+                }
+
+                int year = data[byteOffset] & 0xFF;
+                int month = data[byteOffset + 1] & 0xFF;
+                int day = data[byteOffset + 2] & 0xFF;
+                int hour = data[byteOffset + 3] & 0xFF;
+                int minute = data[byteOffset + 4] & 0xFF;
+                int second = data[byteOffset + 5] & 0xFF;
+
+                return String.format(
+                        "%02d-%02d-%02d %02d:%02d:%02d",
+                        year,
+                        month,
+                        day,
+                        hour,
+                        minute,
+                        second
+                );
+
+            case TOTALTYPE:
+                ByteBuffer totalBuffer =
+                        ByteBuffer
+                                .wrap(data, byteOffset, 8)
+                                .order(ByteOrder.BIG_ENDIAN);
+
+                int integerPart = totalBuffer.getInt();
+                int decimalPart = totalBuffer.getInt();
+
+                return integerPart
+                        + decimalPart / 1_000_000_000.0;
+
+            default:
+                throw new RuntimeException(
+                        "Unsupported data type: "
+                                + info.getType()
+                );
+        }
+    }
+
+
+    private void printValue(
+            DataInfo info,
+            Object value
+    ) {
+
+        System.out.print(
+                info.getName()
+                        + " : "
+                        + value
         );
 
-        return buffer.getFloat();
+        if (info.getUnit() != null
+                && !info.getUnit().isEmpty()) {
+
+            System.out.print(" " + info.getUnit());
+        }
+
+        System.out.println();
     }
 
 
     // ============================================================
-    // READ 64 BIT VALUE
-    // ============================================================
-
-    public long readInt64(
-            int register
-    ) {
-
-        byte[] data =
-                readRegisters(
-                        register,
-                        4
-                );
-
-        ByteBuffer buffer =
-                ByteBuffer.wrap(data);
-
-        buffer.order(
-                ByteOrder.BIG_ENDIAN
-        );
-
-        return buffer.getLong();
-    }
-
-
-    // ============================================================
-    // READ RAW REGISTERS
+    // RAW REGISTER READ
+    // Public: dùng cho block và debug.
     // ============================================================
 
     public byte[] readRegisters(
             int register,
             int quantity
     ) {
+        return readRegistersInternal(
+                register,
+                quantity,
+                true
+        );
+    }
+
+
+    // Scanner dùng bản silent để không in hàng nghìn dòng SEND/RECV.
+    public byte[] readRegistersSilent(
+            int register,
+            int quantity
+    ) {
+        return readRegistersInternal(
+                register,
+                quantity,
+                false
+        );
+    }
+
+
+    private byte[] readRegistersInternal(
+            int register,
+            int quantity,
+            boolean verbose
+    ) {
 
         if (socket == INVALID_SOCKET) {
+            throw new RuntimeException("MAG-8000 chưa được connect.");
+        }
 
-            throw new RuntimeException(
-                    "MAG-8000 chưa được connect."
+        if (register < 0 || register > 0xFFFF) {
+            throw new IllegalArgumentException(
+                    "Register address không hợp lệ: " + register
+            );
+        }
+
+        if (quantity <= 0 || quantity > MAX_READ_REGISTERS) {
+            throw new IllegalArgumentException(
+                    "Quantity phải nằm trong 1.."
+                            + MAX_READ_REGISTERS
+            );
+        }
+
+        if ((long) register + quantity - 1 > 0xFFFFL) {
+            throw new IllegalArgumentException(
+                    "Khoảng register vượt quá 0xFFFF."
             );
         }
 
@@ -403,19 +564,17 @@ public class Mag8000Connect {
                         quantity
                 );
 
-        System.out.println();
-
-        System.out.println(
-                "[SEND] Register "
-                        + register
-                        + " -> "
-                        + bytesToHex(request)
-        );
-
-
-        // ========================================================
-        // SEND
-        // ========================================================
+        if (verbose) {
+            System.out.println();
+            System.out.println(
+                    "[SEND] Block start="
+                            + register
+                            + ", quantity="
+                            + quantity
+                            + " -> "
+                            + bytesToHex(request)
+            );
+        }
 
         int sent =
                 ws.send(
@@ -426,29 +585,19 @@ public class Mag8000Connect {
                 );
 
         if (sent == -1) {
-
             throw new RuntimeException(
                     "Modbus send failed. Error = "
                             + ws.WSAGetLastError()
             );
         }
 
-
-        // ========================================================
-        // RECEIVE
-        // ========================================================
-
-        byte[] response =
-                new byte[256];
-
+        byte[] response = new byte[256];
         int totalReceived = 0;
-
         int expectedLength = -1;
 
         while (true) {
 
-            byte[] temp =
-                    new byte[256];
+            byte[] temp = new byte[256];
 
             int received =
                     ws.recv(
@@ -460,6 +609,12 @@ public class Mag8000Connect {
 
             if (received > 0) {
 
+                if (totalReceived + received > response.length) {
+                    throw new RuntimeException(
+                            "Response buffer overflow."
+                    );
+                }
+
                 System.arraycopy(
                         temp,
                         0,
@@ -468,32 +623,15 @@ public class Mag8000Connect {
                         received
                 );
 
-                totalReceived +=
-                        received;
+                totalReceived += received;
 
+                if (totalReceived >= 2) {
 
-                // =================================================
-                // Need at least:
-                //
-                // Slave
-                // Function
-                // Byte count
-                // =================================================
-
-                if (totalReceived >= 3) {
-
-                    int function =
-                            response[1] & 0xFF;
-
-
-                    // =============================================
-                    // Exception
-                    // =============================================
+                    int function = response[1] & 0xFF;
 
                     if ((function & 0x80) != 0) {
 
                         if (totalReceived >= 3) {
-
                             int exceptionCode =
                                     response[2] & 0xFF;
 
@@ -503,90 +641,66 @@ public class Mag8000Connect {
                             );
                         }
                     }
+                }
 
+                if (totalReceived >= 3) {
 
-                    // =============================================
-                    // Function 03
-                    // =============================================
+                    int byteCount = response[2] & 0xFF;
+                    expectedLength = 3 + byteCount;
 
-                    int byteCount =
-                            response[2] & 0xFF;
-
-                    expectedLength =
-                            3 + byteCount;
-
-                    if (totalReceived
-                            >= expectedLength) {
-
+                    if (totalReceived >= expectedLength) {
                         break;
                     }
                 }
 
             } else {
 
-                int error =
-                        ws.WSAGetLastError();
+                int error = ws.WSAGetLastError();
 
-                if (error == 0
-                        || error == 10060) {
-
+                if (error == 0 || error == 10060) {
                     break;
                 }
 
                 throw new RuntimeException(
-                        "Socket recv error = "
-                                + error
+                        "Socket recv error = " + error
                 );
             }
         }
 
-
-        // ========================================================
-        // VALIDATE
-        // ========================================================
-
         if (totalReceived < 3) {
-
-            throw new RuntimeException(
-                    "Response quá ngắn."
-            );
+            throw new RuntimeException("Response quá ngắn.");
         }
 
-        int responseSlave =
-                response[0] & 0xFF;
-
-        int function =
-                response[1] & 0xFF;
+        int responseSlave = response[0] & 0xFF;
+        int function = response[1] & 0xFF;
 
         if (responseSlave != SLAVE_ID) {
-
             throw new RuntimeException(
-                    "Sai Slave ID."
+                    "Sai Slave ID. Received = " + responseSlave
             );
         }
 
         if (function != 0x03) {
-
             throw new RuntimeException(
-                    "Sai Function Code."
+                    "Sai Function Code. Received = " + function
             );
         }
 
-        int byteCount =
-                response[2] & 0xFF;
+        int byteCount = response[2] & 0xFF;
+        int expectedDataBytes = quantity * 2;
 
-        if (totalReceived
-                < 3 + byteCount) {
-
+        if (byteCount != expectedDataBytes) {
             throw new RuntimeException(
-                    "Incomplete Modbus data."
+                    "Byte count không đúng. Expected = "
+                            + expectedDataBytes
+                            + ", received = "
+                            + byteCount
             );
         }
 
-
-        // ========================================================
-        // COPY DATA ONLY
-        // ========================================================
+        if (totalReceived < 3 + byteCount) {
+            throw new RuntimeException("Incomplete Modbus data.");
+        }
 
         byte[] data =
                 Arrays.copyOfRange(
@@ -595,27 +709,28 @@ public class Mag8000Connect {
                         3 + byteCount
                 );
 
-        System.out.println(
-                "[RECV] "
-                        + bytesToHex(
-                        Arrays.copyOf(
-                                response,
-                                totalReceived
-                        )
-                )
-        );
+        if (verbose) {
+            System.out.println(
+                    "[RECV] "
+                            + bytesToHex(
+                            Arrays.copyOf(
+                                    response,
+                                    totalReceived
+                            )
+                    )
+            );
 
-        System.out.println(
-                "[DATA] "
-                        + bytesToHex(data)
-        );
+            System.out.println(
+                    "[DATA] " + bytesToHex(data)
+            );
+        }
 
         return data;
     }
 
 
     // ============================================================
-    // CREATE IRDA ADDRESS
+    // IRDA ADDRESS
     // ============================================================
 
     private Memory createIrdaAddress(
@@ -623,48 +738,30 @@ public class Mag8000Connect {
             String serviceName
     ) {
 
-        Memory address =
-                new Memory(
-                        SOCKADDR_IRDA_SIZE
-                );
-
+        Memory address = new Memory(SOCKADDR_IRDA_SIZE);
         address.clear();
 
-        address.setShort(
-                0,
-                (short) AF_IRDA
-        );
-
-        address.write(
-                2,
-                deviceId,
-                0,
-                4
-        );
+        address.setShort(0, (short) AF_IRDA);
+        address.write(2, deviceId, 0, 4);
 
         byte[] service =
-                serviceName.getBytes(
-                        StandardCharsets.US_ASCII
-                );
+                serviceName.getBytes(StandardCharsets.US_ASCII);
 
-        address.write(
-                6,
-                service,
-                0,
-                service.length
-        );
+        if (service.length >= 25) {
+            throw new IllegalArgumentException(
+                    "IrDA service name too long."
+            );
+        }
 
-        address.setByte(
-                6 + service.length,
-                (byte) 0
-        );
+        address.write(6, service, 0, service.length);
+        address.setByte(6 + service.length, (byte) 0);
 
         return address;
     }
 
 
     // ============================================================
-    // BUILD MODBUS REQUEST
+    // MODBUS FUNCTION 03 REQUEST
     // ============================================================
 
     private byte[] buildReadHoldingRegisterRequest(
@@ -673,64 +770,25 @@ public class Mag8000Connect {
             int quantity
     ) {
 
-        byte[] frame =
-                new byte[8];
+        byte[] frame = new byte[8];
 
-        frame[0] =
-                (byte) slave;
+        frame[0] = (byte) slave;
+        frame[1] = 0x03;
 
-        frame[1] =
-                0x03;
+        frame[2] = (byte) ((register >> 8) & 0xFF);
+        frame[3] = (byte) (register & 0xFF);
 
-        frame[2] =
-                (byte) (
-                        (register >> 8)
-                                & 0xFF
-                );
+        frame[4] = (byte) ((quantity >> 8) & 0xFF);
+        frame[5] = (byte) (quantity & 0xFF);
 
-        frame[3] =
-                (byte) (
-                        register
-                                & 0xFF
-                );
+        int crc = modbusCRC(frame, 0, 6);
 
-        frame[4] =
-                (byte) (
-                        (quantity >> 8)
-                                & 0xFF
-                );
-
-        frame[5] =
-                (byte) (
-                        quantity
-                                & 0xFF
-                );
-
-        int crc =
-                modbusCRC(
-                        frame,
-                        0,
-                        6
-                );
-
-        frame[6] =
-                (byte) (
-                        crc & 0xFF
-                );
-
-        frame[7] =
-                (byte) (
-                        (crc >> 8)
-                                & 0xFF
-                );
+        frame[6] = (byte) (crc & 0xFF);
+        frame[7] = (byte) ((crc >> 8) & 0xFF);
 
         return frame;
     }
 
-
-    // ============================================================
-    // MODBUS CRC
-    // ============================================================
 
     private int modbusCRC(
             byte[] data,
@@ -738,28 +796,17 @@ public class Mag8000Connect {
             int length
     ) {
 
-        int crc =
-                0xFFFF;
+        int crc = 0xFFFF;
 
-        for (int i = offset;
-             i < offset + length;
-             i++) {
+        for (int i = offset; i < offset + length; i++) {
 
-            crc ^=
-                    data[i] & 0xFF;
+            crc ^= data[i] & 0xFF;
 
-            for (int j = 0;
-                 j < 8;
-                 j++) {
+            for (int j = 0; j < 8; j++) {
 
                 if ((crc & 1) != 0) {
-
-                    crc =
-                            (crc >> 1)
-                                    ^ 0xA001;
-
+                    crc = (crc >> 1) ^ 0xA001;
                 } else {
-
                     crc >>= 1;
                 }
             }
@@ -770,18 +817,15 @@ public class Mag8000Connect {
 
 
     // ============================================================
-    // ASCII
+    // HELPERS
     // ============================================================
 
-    private String readNullTerminatedAscii(
-            byte[] data
-    ) {
+    private String readNullTerminatedAscii(byte[] data) {
 
         int length = 0;
 
         while (length < data.length
                 && data[length] != 0) {
-
             length++;
         }
 
@@ -794,16 +838,9 @@ public class Mag8000Connect {
     }
 
 
-    // ============================================================
-    // HEX
-    // ============================================================
+    public String bytesToHex(byte[] data) {
 
-    private String bytesToHex(
-            byte[] data
-    ) {
-
-        StringBuilder sb =
-                new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
         for (byte b : data) {
 
@@ -820,203 +857,5 @@ public class Mag8000Connect {
         }
 
         return sb.toString();
-    }
-
-    public short readInt16(int register) {
-
-        byte[] data =
-                readRegisters(
-                        register,
-                        1
-                );
-
-        return (short) (
-                ((data[0] & 0xFF) << 8)
-                        |
-                        (data[1] & 0xFF)
-        );
-    }
-
-    public long readUInt32(int register) {
-
-        byte[] data =
-                readRegisters(
-                        register,
-                        2
-                );
-
-        return ((long) (data[0] & 0xFF) << 24)
-                |
-                ((long) (data[1] & 0xFF) << 16)
-                |
-                ((long) (data[2] & 0xFF) << 8)
-                |
-                ((long) (data[3] & 0xFF));
-    }
-
-    public int readInt32(int register) {
-
-        byte[] data =
-                readRegisters(
-                        register,
-                        2
-                );
-
-        ByteBuffer buffer =
-                ByteBuffer.wrap(data);
-
-        buffer.order(
-                ByteOrder.BIG_ENDIAN
-        );
-
-        return buffer.getInt();
-    }
-
-    public double readFloat64(int register) {
-
-        byte[] data =
-                readRegisters(
-                        register,
-                        4
-                );
-
-        ByteBuffer buffer =
-                ByteBuffer.wrap(data);
-
-        buffer.order(
-                ByteOrder.BIG_ENDIAN
-        );
-
-        return buffer.getDouble();
-    }
-
-    public Object read(
-            DataInfo register
-    ) {
-
-        switch (register.getType()) {
-
-            case UINT16:
-                return readUInt16(
-                        register.getAddress()
-                );
-
-            case INT16:
-                return readInt16(
-                        register.getAddress()
-                );
-
-            case UINT32:
-                return readUInt32(
-                        register.getAddress()
-                );
-
-            case INT32:
-                return readInt32(
-                        register.getAddress()
-                );
-
-            case FLOAT32:
-                return readFloat32(
-                        register.getAddress()
-                );
-
-            case INT64:
-                return readInt64(
-                        register.getAddress()
-                );
-
-            case FLOAT64:
-                return readFloat64(
-                        register.getAddress()
-                );
-
-            case TOTALTYPE:
-                return readTotalType(
-                        register.getAddress()
-                );
-
-            default:
-                throw new RuntimeException(
-                        "Unsupported data type: "
-                                + register.getType()
-                );
-        }
-    }
-
-    public void printRegister(
-            DataInfo register
-    ) {
-
-        try {
-
-            Object value =
-                    read(register);
-
-            String unit =
-                    register.getUnit();
-
-            System.out.print(
-                    register.getName()
-                            + " : "
-                            + value
-            );
-
-            if (unit != null
-                    && !unit.isEmpty()) {
-
-                System.out.print(
-                        " " + unit
-                );
-            }
-
-            System.out.println();
-
-        } catch (Exception e) {
-
-            System.out.println(
-                    register.getName()
-                            + " : ERROR -> "
-                            + e.getMessage()
-            );
-        }
-    }
-
-
-
-    public double readTotalType(int register) {
-
-        // TotalType = 8 bytes = 4 Modbus registers
-        byte[] data =
-                readRegisters(
-                        register,
-                        4
-                );
-
-        if (data.length != 8) {
-            throw new RuntimeException(
-                    "TOTALTYPE cần 8 byte, nhưng nhận được "
-                            + data.length
-                            + " byte."
-            );
-        }
-
-        ByteBuffer buffer =
-                ByteBuffer.wrap(data);
-
-        buffer.order(
-                ByteOrder.BIG_ENDIAN
-        );
-
-        // 4 byte đầu
-        int integerPart =
-                buffer.getInt();
-
-        // 4 byte sau
-        int decimalPart =
-                buffer.getInt();
-
-        return integerPart
-                + decimalPart / 1_000_000_000.0;
     }
 }
