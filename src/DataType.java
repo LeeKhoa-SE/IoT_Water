@@ -1,10 +1,11 @@
 public enum DataType {
+    UINT8,
     UINT16,
-    INT16,
     UINT32,
     INT32,
     FLOAT32,
-    INT64,
     FLOAT64,
+    STRING,
+    DATE,
     TOTALTYPE
 }
